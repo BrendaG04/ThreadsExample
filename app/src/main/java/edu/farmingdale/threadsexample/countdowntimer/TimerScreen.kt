@@ -48,11 +48,15 @@ fun TimerScreen(
             contentAlignment = Alignment.Center
         ) {
             if (timerViewModel.isRunning) {
-
+                CircularProgressIndicator(
+                    progress = { timerViewModel.remainingMillis.toFloat() / timerViewModel.totalMillis },
+                    modifier = Modifier.size(300.dp),
+                    strokeWidth = 8.dp
+                )
             }
             Text(
                 text = timerText(timerViewModel.remainingMillis),
-                fontSize = 40.sp,
+                fontSize = 60.sp,
             )
         }
         TimePicker(
