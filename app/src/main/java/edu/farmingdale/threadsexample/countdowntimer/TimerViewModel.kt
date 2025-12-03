@@ -34,6 +34,10 @@ class TimerViewModel : ViewModel() {
     var isRunning by mutableStateOf(false)
         private set
 
+    var isFinished by mutableStateOf(false)
+        private set
+
+
     fun selectTime(hour: Int, min: Int, sec: Int) {
         selectedHour = hour
         selectedMinute = min
@@ -56,6 +60,7 @@ class TimerViewModel : ViewModel() {
                 }
 
                 isRunning = false
+                isFinished = true
             }
         }
     }
@@ -66,6 +71,11 @@ class TimerViewModel : ViewModel() {
             isRunning = false
             remainingMillis = 0
         }
+    }
+
+    fun resetTimer() {
+        cancelTimer()
+        startTimer()
     }
 
     override fun onCleared() {

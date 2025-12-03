@@ -1,15 +1,19 @@
 package edu.farmingdale.threadsexample.countdowntimer
 
+import android.media.MediaPlayer
 import android.util.Log
 import android.widget.NumberPicker
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.isFinished
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -25,11 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
+import edu.farmingdale.threadsexample.R
 import java.text.DecimalFormat
 import java.util.Locale
 import kotlin.time.Duration
@@ -40,11 +47,24 @@ fun TimerScreen(
     modifier: Modifier = Modifier,
     timerViewModel: TimerViewModel = viewModel()
 ) {
+
+    val context = LocalContext.current
+    LaunchedEffect(timerViewModel.isFinished) {
+        if (timerViewModel.isFinished) {
+            try {
+                val mediaPlayer = MediaPlayer.create(context, R.raw.alarm)
+                mediaPlayer.start()
+                mediaPlayer.setOnCompletionListener { mp -> mp.release() }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = modifier
                 .padding(20.dp)
-                .size(240.dp),
+                .size(300.dp),
             contentAlignment = Alignment.Center
         ) {
             if (timerViewModel.isRunning) {
@@ -54,25 +74,39 @@ fun TimerScreen(
                     strokeWidth = 8.dp
                 )
             }
+
+            val isLast10Seconds = timerViewModel.remainingMillis in 1..10000
+            val textColor = if (isLast10Seconds) Color.Red else Color.Unspecified
+            val fontWeight = if (isLast10Seconds) FontWeight.Bold else FontWeight.Normal
+
             Text(
                 text = timerText(timerViewModel.remainingMillis),
                 fontSize = 60.sp,
+                color = textColor,
+                fontWeight = fontWeight
             )
         }
-        TimePicker(
-            hour = timerViewModel.selectedHour,
-            min = timerViewModel.selectedMinute,
-            sec = timerViewModel.selectedSecond,
-            onTimePick = timerViewModel::selectTime
-        )
-        if (timerViewModel.isRunning) {
-            Button(
-                onClick = timerViewModel::cancelTimer,
-                modifier = modifier.padding(50.dp)
+
+        if (timerViewModel.isRunning || timerViewModel.remainingMillis > 0) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Cancel")
+                Button(onClick = timerViewModel::cancelTimer) {
+                    Text("Cancel")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = timerViewModel::resetTimer) {
+                    Text("Reset")
+                }
             }
         } else {
+            TimePicker(
+                hour = timerViewModel.selectedHour,
+                min = timerViewModel.selectedMinute,
+                sec = timerViewModel.selectedSecond,
+                onTimePick = timerViewModel::selectTime
+            )
             Button(
                 enabled = timerViewModel.selectedHour +
                         timerViewModel.selectedMinute +
